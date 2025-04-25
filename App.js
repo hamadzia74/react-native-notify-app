@@ -1,5 +1,5 @@
 import { StatusBar } from "expo-status-bar";
-import { Button, StyleSheet, View } from "react-native";
+import { Alert, Button, Platform, StyleSheet, View } from "react-native";
 import * as Notifications from "expo-notifications";
 import { useEffect } from "react";
 
@@ -16,14 +16,35 @@ Notifications.setNotificationHandler({
 
 export default function App() {
   useEffect(() => {
-    Notifications.getExpoPushTokenAsync().then((pushTokenData) => {
+    async function configurePushNotifications() {
+      const { status } = await Notifications.getPermissionsAsync(); // this method which returns a promise, which eventually will tell us what the permission status of this app on this device is. The status property will tell us whether we currently have permission to get such a PushToken and to get Push Notifications or not.
+      let finalStatus = status;
+      if (finalStatus !== "granted") {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+      if (finalStatus !== "granted") {
+        Alert.alert(
+          "Permission required",
+          "Push notifications need the appropriate permissions."
+        );
+        return;
+      }
+      const pushTokenData = await Notifications.getExpoPushTokenAsync();
       console.log(pushTokenData);
-    });
+      if (Platform.OS === "android") {
+        Notifications.setNotificationChannelAsync("default", {
+          name: "default",
+          importance: Notifications.AndroidImportance.DEFAULT,
+        });
+      }
+    }
 
-    return () => {
-      second;
-    };
-  }, [third]);
+    configurePushNotifications();
+    // Notifications.getExpoPushTokenAsync().then((pushTokenData) => {
+    //   console.log(pushTokenData);
+    // });
+  }, []);
 
   useEffect(() => {
     const subscription1 = Notifications.addNotificationReceivedListener(
